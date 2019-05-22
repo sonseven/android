@@ -3,24 +3,31 @@ package com.example.mini_project.Activity;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.example.mini_project.Model.AllUser;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.mini_project.R;
-import com.example.mini_project.Service.Api;
 
-import java.util.List;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
+
+    private final static String URL = "http://192.168.1.23:3010/api/dev";
+
 
     EditText etUsername, etPassword;
     TextView tvRegister, tvResult;
@@ -36,6 +43,29 @@ public class MainActivity extends AppCompatActivity {
         btnLogin = findViewById(R.id.btn_login);
         tvRegister = findViewById(R.id.tv_register);
         tvResult = findViewById(R.id.tv_result);
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        JsonArrayRequest arrayRequest = new JsonArrayRequest(Request.Method.GET, URL, new Response.Listener<JSONArray>() {
+            @Override
+            public void onResponse(JSONArray response) {
+                for (int i = 0; i < response.length(); i++){
+                    try {
+                        JSONObject userObject = response.getJSONObject(i);
+                        Log.d("Items: ", userObject.getString("birth"));
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("Error", error.getMessage());
+            }
+        });
+        queue.add(arrayRequest);
+
 
         tvRegister.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -54,52 +84,29 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
     }
+//    private void getJsonObject(String url){
+//        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, new Response.Listener<JSONObject>() {
+//            @Override
+//            public void onResponse(JSONObject response) {
+//
+//            }
+//        }, new Response.ErrorListener() {
+//            @Override
+//            public void onErrorResponse(VolleyError error) {
+//
+//            }
+//        });
+
+//    }
+
+
 
     private void userLogin() {
 
-
         String username = etUsername.getText().toString().trim();
         String password = etPassword.getText().toString().trim();
-
-//        Api api = Service.getService();
-//        Call<List<AllUser>> call = Api.getUsers();
-        Retrofit retrofit = new Retrofit.Builder()
-                                .baseUrl("http://localhost:3010/api/dev/")
-                                .addConverterFactory(GsonConverterFactory.create())
-                                .build();
-
-        Api api = retrofit.create(Api.class);
-        Call<List<AllUser>> call = api.getUsers();
-
-        call.enqueue(new Callback<List<AllUser>>() {
-            @Override
-                public void onResponse(Call<List<AllUser>> call, Response<List<AllUser>> response) {
-
-                    if(!response.isSuccessful()){
-                        tvResult.setText("Code: " + response.code());
-                        return;
-                    }
-
-                    List<AllUser> allUsers = response.body();
-
-                    for (AllUser alluser : allUsers){
-                        String content =" ";
-                        content += "username: " + alluser.getUsername() + "\n";
-                        content += "password: " + alluser.getPassword() + "\n";
-                        content += "fullname: " + alluser.getFullname() + "\n";
-                        content += "birth: " + alluser.getBirth() + "\n";
-
-                        tvResult.append(content);
-                    }
-            }
-
-            @Override
-            public void onFailure(Call<List<AllUser>> call, Throwable t) {
-                  tvResult.setText(t.getMessage());
-            }
-        });
-
 
         if (username.isEmpty()) {
             etUsername.setError("Username is required");
@@ -111,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
             etPassword.requestFocus();
             return;
         }
-
 
     }
 }

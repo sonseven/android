@@ -2,6 +2,7 @@ package com.example.mini_project.Data;
 
 import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -48,8 +49,23 @@ public class DBManagement extends SQLiteOpenHelper {
         value.put(Attribute.KEY_FULLNAME, user.getFullname());
         value.put(Attribute.KEY_BIRTH, user.getBirth());
 
+        //insert to row
         db.insert(Attribute.DB_TABLE, null, value);
-        db.close();
+        db.close(); //close database connection
+    }
+    //get a user
+    public User getUser(String username){
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.query(Attribute.DB_TABLE, new String[]{Attribute.KEY_USERNAME,
+                                                                Attribute.KEY_PASSWORD,
+                                                                Attribute.KEY_FULLNAME,
+                                                                Attribute.KEY_BIRTH}, Attribute.KEY_USERNAME + "=?",null, null,null,null);
+        if(cursor != null){
+            cursor.moveToFirst();
+        }
+        User user = new User(cursor.getString(0), cursor.getString(1), cursor.getString(2), cursor.getString(3));
+        return user;
     }
 
 }
